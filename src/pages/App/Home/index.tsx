@@ -73,7 +73,12 @@ const Home: React.FC = () => {
             width: '70%',
           }}>
           <AccountValueText>R$ {formatValue(balance)}</AccountValueText>
-          <RectButton rippleColor="#d0d0d0" style={{ borderRadius: 100 }}>
+          <RectButton
+            onPress={() => {
+              navigation.navigate('History');
+            }}
+            rippleColor="#d0d0d0"
+            style={{ borderRadius: 100 }}>
             <Icon name="history" size={40} color="#fff" style={{ left: -2 }} />
           </RectButton>
         </View>

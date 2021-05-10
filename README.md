@@ -36,5 +36,7 @@ After running one of the commands above, you can run the below command to start 
 
 # Application Preview
 
-<img src=".github/images/preview_1.png" style="max-width: 300px" />
-<img src=".github/images/preview_2.png" style="max-width: 300px" />
+<div align="center">
+  <img src=".github/images/preview_1.png" height=500 />
+  <img src=".github/images/preview_2.png" height=500 />
+</div>
