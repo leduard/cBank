@@ -1,9 +1,20 @@
-import React, { useState } from 'react';
-import { ScrollView, View, Text, Dimensions } from 'react-native';
+import React, { useCallback, useState, useContext } from 'react';
+import {
+  ScrollView,
+  View,
+  Text,
+  Dimensions,
+  ActivityIndicator,
+} from 'react-native';
+import { Toast } from 'react-native-ui-lib';
+import { ThemeContext } from 'styled-components/native';
+import { useNavigation } from '@react-navigation/native';
 
 import Background from '~/components/Background';
 import TextInput from '~/components/TextInput';
 import Button from '~/components/Button';
+
+import { signUp } from '~/services/api';
 
 import { TopTextContainer, SignUpForm } from './styles';
 
@@ -14,9 +25,113 @@ const App: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [signUpError, setSignUpError] = useState(false);
+
+  const theme = useContext(ThemeContext);
+  const navigation = useNavigation();
+
+  const handleSignUp = useCallback(async () => {
+    setLoading(true);
+    setSignUpError(false);
+
+    if (password !== confirmPassword) {
+      setSignUpError(true);
+      setToastVisible(true);
+
+      return;
+    }
+
+    const signUpReturn = await signUp({
+      fname: nome,
+      lname: sobrenome,
+      cpf: cpf.replace(/[^\d]/g, ''),
+      email,
+      password,
+    });
+
+    if (!signUpReturn?.email) {
+      setSignUpError(true);
+    }
+
+    setToastVisible(true);
+    setLoading(false);
+
+    if (signUpReturn?.email) {
+      setNome('');
+      setSobrenome('');
+      setCpf('');
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+      setTimeout(() => {
+        navigation.navigate('SignIn');
+      }, 1500);
+    }
+  }, [confirmPassword, cpf, email, navigation, nome, password, sobrenome]);
+
+  const renderSuccessToastContent = () => {
+    return (
+      <View
+        style={{
+          backgroundColor: theme.green,
+          paddingVertical: 25,
+          paddingHorizontal: 20,
+        }}>
+        <Text
+          style={{
+            color: theme.textColor,
+            fontSize: 18,
+            fontWeight: 'bold',
+            marginBottom: 15,
+          }}>
+          Conta criada com sucesso
+        </Text>
+        <Text style={{ color: theme.textColor, fontSize: 16 }}>
+          Você será redirecionado para a tela de login em instantes
+        </Text>
+      </View>
+    );
+  };
+
+  const renderFailToastContent = () => {
+    return (
+      <View
+        style={{
+          backgroundColor: theme.red,
+          paddingVertical: 25,
+          paddingHorizontal: 20,
+        }}>
+        <Text
+          style={{
+            color: theme.white,
+            fontSize: 18,
+            fontWeight: 'bold',
+            marginBottom: 15,
+          }}>
+          Não foi possível criar a conta
+        </Text>
+        <Text style={{ color: theme.white, fontSize: 16 }}>
+          Verifique as informações digitadas ou tente novamente mais tarde
+        </Text>
+      </View>
+    );
+  };
 
   return (
     <Background colorHeight={500}>
+      <Toast
+        visible={toastVisible}
+        position="bottom"
+        allowDismiss
+        autoDismiss={2000}
+        animated
+        onDismiss={() => {
+          setToastVisible(false);
+        }}>
+        {signUpError ? renderFailToastContent() : renderSuccessToastContent()}
+      </Toast>
       <ScrollView
         contentContainerStyle={{
           flex: 1,
@@ -135,16 +250,21 @@ const App: React.FC = () => {
           </View>
 
           <Button
+            disabled={loading}
             onPress={() => {
-              // TODO: do something
+              handleSignUp();
             }}
             style={{
               alignSelf: 'stretch',
               alignItems: 'center',
             }}>
-            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
-              Cadastrar
-            </Text>
+            {!loading ? (
+              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
+                Cadastrar
+              </Text>
+            ) : (
+              <ActivityIndicator size={22} color="#FFF" />
+            )}
           </Button>
         </SignUpForm>
       </ScrollView>

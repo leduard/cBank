@@ -13,6 +13,23 @@ export const ProfileContainer = styled.View`
   border-radius: 20px;
 `;
 
+export const UserCircle = styled.View`
+  align-items: center;
+  justify-content: center;
+
+  width: 120px;
+  height: 120px;
+
+  border-radius: 100px;
+  background: #fff;
+`;
+
+export const UserCircleText = styled.Text`
+  font-weight: bold;
+  color: ${(props) => props.theme.secondaryColor};
+  font-size: 52px;
+`;
+
 export const ButtonsContainer = styled.View`
   width: 90%;
   flex: 1;

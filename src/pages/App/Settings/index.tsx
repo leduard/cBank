@@ -3,8 +3,11 @@ import { Image } from 'react-native-ui-lib';
 import { ThemeContext } from 'styled-components';
 import { darken } from 'polished';
 
+import { Alert } from 'react-native';
 import Background from '~/components/Background';
 import Text from '~/components/Text';
+
+import { useAuth } from '~/context/Auth';
 
 import {
   ProfileContainer,
@@ -12,21 +15,24 @@ import {
   SettingsButton,
   SettingsButtonText,
   SignOutButton,
+  UserCircle,
+  UserCircleText,
 } from './styles';
 
 const Settings: React.FC = () => {
   const theme = useContext(ThemeContext);
+  const { user, singOut } = useAuth();
 
   return (
     <Background inverted colorHeight={0}>
       <ProfileContainer>
-        <Image
-          source={{
-            uri:
-              'https://avatars.githubusercontent.com/u/43726280?s=400&u=1c3c8cdc743382691324c8b35140380c5d95fca6&v=4',
-          }}
-          style={{ width: 80, height: 80, borderRadius: 80 }}
-        />
+        <UserCircle style={{ elevation: 2 }}>
+          <UserCircleText>{`${user?.f_name
+            ?.charAt(0)
+            ?.toUpperCase()}${user?.l_name
+            ?.charAt(0)
+            ?.toUpperCase()}`}</UserCircleText>
+        </UserCircle>
         <Text
           style={{
             color: '#fff',
@@ -34,7 +40,7 @@ const Settings: React.FC = () => {
             fontSize: 24,
             textAlign: 'center',
           }}>
-          Luiz Eduardo Oliveira de Araújo
+          {`${user.f_name} ${user.l_name}`}
         </Text>
       </ProfileContainer>
       <ButtonsContainer>
@@ -42,7 +48,20 @@ const Settings: React.FC = () => {
           <SettingsButtonText>Editar Perfil</SettingsButtonText>
         </SettingsButton>
       </ButtonsContainer>
-      <SignOutButton>
+      <SignOutButton
+        onPress={() => {
+          Alert.alert(
+            'Deseja desconectar?',
+            'Deseja fazer logoff da sua conta?',
+            [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+              },
+              { text: 'OK', onPress: () => singOut() },
+            ],
+          );
+        }}>
         <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#fff' }}>
           Desconectar
         </Text>

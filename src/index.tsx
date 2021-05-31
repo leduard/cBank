@@ -7,6 +7,7 @@ import 'intl/locale-data/jsonp/pt-BR';
 
 import Routes from './routes';
 import { BalanceProvider } from './context/Balance';
+import { AuthProvider } from './context/Auth';
 
 import styles from './styles';
 
@@ -16,6 +17,7 @@ const App: React.FC = () => {
     red: styles.colors.red,
     green: styles.colors.green,
     yellow: styles.colors.yellow,
+    white: styles.colors.white,
   });
 
   return (
@@ -26,9 +28,11 @@ const App: React.FC = () => {
           translucent
           barStyle="light-content"
         />
-        <BalanceProvider>
-          <Routes />
-        </BalanceProvider>
+        <AuthProvider>
+          <BalanceProvider>
+            <Routes />
+          </BalanceProvider>
+        </AuthProvider>
       </NavigationContainer>
     </ThemeProvider>
   );

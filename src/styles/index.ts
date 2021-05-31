@@ -22,6 +22,7 @@ const styles = {
     red: '#DA2F3A',
     green: '#02C76B',
     yellow: '#F8F877',
+    white: '#EFEFF1',
   },
 };
 

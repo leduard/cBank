@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, FlatList } from 'react-native';
 
 import Background from '~/components/Background';
@@ -7,7 +7,11 @@ import ArrowDown from '~/assets/icons/arrow_down.svg';
 import ArrowUp from '~/assets/icons/arrow_up.svg';
 import Arrows from '~/assets/icons/arrows.svg';
 
+import { useAuth } from '~/context/Auth';
+
 import formatValue from '~/util/formatValue';
+
+import { getHistory } from '~/services/api';
 
 import {
   TransactionContainer,
@@ -18,6 +22,30 @@ import {
 } from './styles';
 
 const History: React.FC = () => {
+  const [history, setHistory] = useState<
+    {
+      id: number;
+      type: number;
+      value: number;
+      cpf_send: string;
+      send_user: string;
+      time: Date;
+    }[]
+  >([]);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    async function run() {
+      const historyResponse = await getHistory(user.token);
+
+      if (historyResponse?.length) {
+        setHistory(historyResponse);
+      }
+    }
+
+    run();
+  }, [user.token]);
+
   const transactionsTypes = [
     { type: 1, name: 'Retirada' },
     { type: 2, name: 'Deposito' },
@@ -32,38 +60,7 @@ const History: React.FC = () => {
           flex: 1,
           paddingTop: 10,
         }}
-        data={[
-          {
-            type: 2,
-            value: 100000.0,
-            time: '2021-04-29 23:46:09',
-            cpf_send: null,
-          },
-          {
-            type: 3,
-            value: 700.0,
-            time: '2021-04-29 23:53:20',
-            cpf_send: '1111111111',
-          },
-          {
-            type: 3,
-            value: 700.0,
-            time: '2021-04-29 23:54:10',
-            cpf_send: '1111111111',
-          },
-          {
-            type: 3,
-            value: 700.0,
-            time: '2021-04-29 23:58:27',
-            cpf_send: '1111111111',
-          },
-          {
-            type: 3,
-            value: 700.0,
-            time: '2021-04-30 01:22:56',
-            cpf_send: '1111111111',
-          },
-        ]}
+        data={history.reverse()}
         keyExtractor={() => String(Math.random())}
         renderItem={({ item }) => {
           return (
@@ -98,9 +95,16 @@ const History: React.FC = () => {
                     alignItems: 'flex-end',
                     justifyContent: true ? 'space-between' : 'flex-end',
                   }}>
-                  <TransactionInvolved>{item.cpf_send}</TransactionInvolved>
+                  <TransactionInvolved>
+                    {item.cpf_send &&
+                      `${item.cpf_send?.replace(
+                        /(\d{3})(\d{3})(\d{3})(\d{1,2})/g,
+                        '$1.$2.$3-$4',
+                      )}`}
+                  </TransactionInvolved>
                   <TransactionValue>
-                    R$ {formatValue(item.value)}
+                    {item.cpf_send === user.cpf ? '-' : '+'} R${' '}
+                    {formatValue(item.value)}
                   </TransactionValue>
                 </View>
                 <TransactionDate>

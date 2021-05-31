@@ -1,23 +1,82 @@
-import React, { useState } from 'react';
-import { View, Dimensions } from 'react-native';
+import React, { useCallback, useContext, useState } from 'react';
+import { View, Dimensions, ActivityIndicator } from 'react-native';
+import { Toast } from 'react-native-ui-lib';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { useNavigation } from '@react-navigation/native';
+import { ThemeContext } from 'styled-components';
 
 import Background from '~/components/Background';
 import Text from '~/components/Text';
 import TextInput from '~/components/TextInput';
 import Button from '~/components/Button';
 
+import { useAuth } from '~/context/Auth';
+
 import { TopTextContainer, SignInForm, ForgotPassText } from './styles';
 
 const SignIn: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [signUpError, setSignUpError] = useState(false);
 
-  const navigation = useNavigation();
+  const theme = useContext(ThemeContext);
+  const { signIn } = useAuth();
+
+  const handleSignIn = useCallback(async () => {
+    setLoading(true);
+    setSignUpError(false);
+
+    const signInReturn = await signIn({
+      email,
+      password,
+    });
+
+    if (!signInReturn) {
+      setSignUpError(true);
+    }
+
+    setToastVisible(true);
+    setLoading(false);
+  }, [email, password, signIn]);
+
+  const renderFailToastContent = () => {
+    return (
+      <View
+        style={{
+          backgroundColor: theme.red,
+          paddingVertical: 25,
+          paddingHorizontal: 20,
+        }}>
+        <Text
+          style={{
+            color: theme.white,
+            fontSize: 18,
+            fontWeight: 'bold',
+            marginBottom: 15,
+          }}>
+          Não foi possível fazer login
+        </Text>
+        <Text style={{ color: theme.white, fontSize: 16 }}>
+          Verifique as informações digitadas ou tente novamente mais tarde
+        </Text>
+      </View>
+    );
+  };
 
   return (
     <Background>
+      <Toast
+        visible={toastVisible}
+        position="bottom"
+        allowDismiss
+        autoDismiss={2000}
+        animated
+        onDismiss={() => {
+          setToastVisible(false);
+        }}>
+        {signUpError && renderFailToastContent()}
+      </Toast>
       <View
         style={{
           flex: 1,
@@ -49,6 +108,7 @@ const SignIn: React.FC = () => {
               placeholder="E-mail"
               hint="example@mail.com"
               returnKeyType="next"
+              keyboardType="email-address"
               icon="envelope"
               width={Dimensions.get('screen').width - 100}
             />
@@ -70,17 +130,22 @@ const SignIn: React.FC = () => {
               alignItems: 'center',
             }}>
             <Button
+              disabled={loading}
               onPress={() => {
-                // TODO: do login
-                navigation.navigate('App');
+                handleSignIn();
               }}
               style={{
                 alignSelf: 'stretch',
                 alignItems: 'center',
               }}>
-              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
-                Entrar
-              </Text>
+              {!loading ? (
+                <Text
+                  style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
+                  Entrar
+                </Text>
+              ) : (
+                <ActivityIndicator size={22} color="#FFF" />
+              )}
             </Button>
             <TouchableOpacity
               onPress={() => {

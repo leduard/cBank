@@ -1,12 +1,17 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useCallback } from 'react';
 import { Incubator, Text, View } from 'react-native-ui-lib';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { ThemeContext } from 'styled-components';
 import { lighten } from 'polished';
+import { Toast } from 'react-native-ui-lib';
 
+import { Alert } from 'react-native';
 import Button from '~/components/Button';
 
 import { useBalance } from '~/context/Balance';
+import { useAuth } from '~/context/Auth';
+
+import { depositValue as depositValueAPI } from '~/services/api';
 
 import { Container } from './styles';
 
@@ -14,9 +19,12 @@ const { TextField } = Incubator;
 
 const DepositModalContent: React.FC = () => {
   const [depositValue, setDepositValue] = useState('');
-  const theme = useContext(ThemeContext);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [depositError, setDepositError] = useState(false);
 
-  const { balance, updateBalance } = useBalance();
+  const theme = useContext(ThemeContext);
+  const { updateBalance } = useBalance();
+  const { user } = useAuth();
 
   const hasValue = Boolean(depositValue && depositValue.length > 0);
 
@@ -30,8 +38,93 @@ const DepositModalContent: React.FC = () => {
     return valueCopy;
   };
 
+  const depositMoney = useCallback(async () => {
+    let actualValue = depositValue;
+
+    actualValue = actualValue.replace(/[.]/g, '');
+    actualValue = actualValue.replace(/,/g, '.');
+
+    setDepositError(false);
+    setToastVisible(false);
+
+    const depositResponse = await depositValueAPI(
+      user.token,
+      parseFloat(actualValue),
+    );
+
+    if (depositResponse?.balance.toString()) {
+      updateBalance(depositResponse.balance);
+      setDepositError(false);
+      setToastVisible(true);
+    } else {
+      setDepositError(true);
+      setToastVisible(true);
+    }
+  }, [depositValue, updateBalance, user.token]);
+
+  const renderFailToastContent = () => {
+    return (
+      <View
+        style={{
+          backgroundColor: theme.red,
+          paddingVertical: 10,
+          paddingHorizontal: 20,
+        }}>
+        <Text
+          style={{
+            color: theme.white,
+            fontSize: 18,
+            fontWeight: 'bold',
+            marginBottom: 15,
+          }}>
+          Não foi possível fazer o depósito
+        </Text>
+        <Text style={{ color: theme.white, fontSize: 16 }}>
+          Não foi possível fazer o depósito, verifique o valor digitado ou tente
+          novamente mais tarde
+        </Text>
+      </View>
+    );
+  };
+
+  const renderSuccessToastContent = () => {
+    return (
+      <View
+        style={{
+          backgroundColor: theme.green,
+          paddingVertical: 10,
+          paddingHorizontal: 20,
+        }}>
+        <Text
+          style={{
+            color: theme.textColor,
+            fontSize: 18,
+            fontWeight: 'bold',
+            marginBottom: 15,
+          }}>
+          Depósito concluído com sucesso!
+        </Text>
+        <Text style={{ color: theme.textColor, fontSize: 16 }}>
+          Seu depósito fei concluído com sucesso e o dinheiro já está pronto
+          para ser usado
+        </Text>
+      </View>
+    );
+  };
+
   return (
     <Container>
+      <Toast
+        visible={toastVisible}
+        position="bottom"
+        allowDismiss
+        autoDismiss={2000}
+        animated
+        onDismiss={() => {
+          setToastVisible(false);
+        }}>
+        {depositError ? renderFailToastContent() : renderSuccessToastContent()}
+      </Toast>
       <Text
         text30
         center
@@ -82,13 +175,7 @@ const DepositModalContent: React.FC = () => {
         <Button
           disabled={!hasValue}
           onPress={() => {
-            // TODO: do deposit
-            let actualValue = depositValue;
-
-            actualValue = actualValue.replace(/[.]/g, '');
-            actualValue = actualValue.replace(/,/g, '.');
-
-            updateBalance(balance + parseFloat(actualValue));
+            depositMoney();
             setDepositValue('');
           }}
           style={{
